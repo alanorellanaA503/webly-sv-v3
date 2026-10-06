@@ -1,0 +1,38 @@
+:root {
+    /* Nuestra  nueva paleta orignal version 3 de Webly sv  */
+        --graphite: #363537;
+        --watermelon: #ef2d56;
+        --pumpkin-spice: #ed7d3a;
+        --willow-green: #8cd867;
+        --emerald: #2fbf71;
+
+    /*Ahora los colores según su función dentro de la interfaz */
+        --color-background: #f7faf8;
+        --color-surface: #ffffff;
+        --color-text: var(--graphite);
+        --color-muted: #62676a;
+        --color-border: #dce6df;
+
+    /* Y por que no una variante oscura pra texto y botones con buen contraste */
+        --color-primary: #176b40;
+        --color-primary-hover: #115331;
+    
+    /*Ahora la tipografía */
+        --font-body: 'DM Sans', sans-serif;
+        --font-heading: 'Space Grotesk', sans-serif;
+
+  /* Las medidas compartidas */
+        --container-width: 1180px;
+        --navbar-height: 80px;
+        --radius: 20px;
+        --shadow: 0 12px 32px rgb(54 53 55 / 7%);
+
+  /* Y por último la Identidad visual */
+    --brand-gradient: linear-gradient(
+        135deg,
+        var(--willow-green),
+        var(--emerald)
+    );
+    
+
+}
