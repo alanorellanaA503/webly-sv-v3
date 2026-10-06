@@ -1,19 +1,19 @@
 @import './variables.css';
 
-/*Nuestra base osea las dimensiones predecibles y 
-eliminación del margen inicial */
+/* Base: dimensiones predecibles y eliminación del margen inicial */
 *,
 *::before,
 *::after {
     box-sizing: border-box;
 }
 
-body{
+body {
     margin: 0;
     font-family: var(--font-body);
     font-size: 1rem;
     line-height: 1.7;
-    color: var(--color-background);
+    color: var(--color-text);
+    background: var(--color-background);
 }
 
 button,
@@ -23,60 +23,60 @@ textarea {
     font: inherit;
 }
 
-button{
+button {
     cursor: pointer;
 }
 
-a{
+a {
     color: inherit;
     text-underline-offset: 4px;
 }
-
 
 img {
     display: block;
     max-width: 100%;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     margin: 0 0 1rem;
     font-family: var(--font-heading);
     line-height: 1.15;
-    letter-spacing: -0.04rem;
+    letter-spacing: -0.04em;
 }
 
 h1 {
     font-size: clamp(2.5rem, 6vw, 4.8rem);
 }
 
-h2{
+h2 {
     font-size: clamp(1.8rem, 4vw, 3rem);
 }
 
-p{
+p {
     margin: 0 0 1rem;
 }
 
-:focus-visible{
+:focus-visible {
     outline: 3px solid var(--color-primary);
     outline-offset: 5px;
 }
 
-/*Nuestro footer queda abajo incluso SI la vista tiene poco contenido, que profesional no?*/
-#app{
+/* El footer queda abajo incluso cuando una vista tiene poco contenido */
+#app {
     min-height: 100svh;
 }
 
-.site-layout{
+.site-layout {
     min-height: 100svh;
     display: flex;
     flex-direction: column;
 }
 
-.site-main{
+.site-main {
     flex: 1;
     padding-top: var(--navbar-height);
-
 }
 
 .container {
@@ -84,13 +84,12 @@ p{
     margin-inline: auto;
 }
 
-/* Ahora los componentes visuales compartidos*/
-
+/* Componentes visuales compartidos */
 .brand {
     font-family: var(--font-heading);
     font-size: 2rem;
     font-weight: 700;
-    letter-spacing: -0.07rem;
+    letter-spacing: -0.07em;
     text-decoration: none;
 }
 
@@ -98,43 +97,41 @@ p{
     color: var(--color-primary);
 }
 
-.button{
+.button {
     display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        min-height: 46px;
-        padding: 0.8rem 1.3rem;
-        border: 1px solid transparent;
-        border-radius: 100px;
-        background: var(--color-primary);
-        color: #ffffff;
-        font-weight: 600;
-        text-decoration: none;
-        transition: background 0.2s, transform 0.2s;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 46px;
+    padding: 0.8rem 1.3rem;
+    border: 1px solid transparent;
+    border-radius: 100px;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
 }
 
-.button:hover{
- background: var(--color-primary-hover);
- transform: translateY(-2px);
+.button:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
 }
 
-.page-section{
+.page-section {
     padding-block: clamp(3rem, 7vw, 6rem);
 }
 
 .page-intro {
-    background-color: 
-            radial-gradient(
-                ellipse at top right,
-              rgb(140 216 103 / 20%),
-                transparent 65%
-            ),
-            var(--color-background);
+    background:
+        radial-gradient(ellipse at top right,
+            rgb(140 216 103 / 20%),
+            transparent 65%),
+        var(--color-background);
 }
 
 .eyebrow {
-color: var(--color-primary);
+    color: var(--color-primary);
     font-size: 0.875rem;
     font-weight: 700;
     text-transform: uppercase;

@@ -1,11 +1,17 @@
-<script setup></script>
+<script setup>
+import { RouterView } from 'vue-router'
+import SiteNavbar from './components/layout/SiteNavbar.vue'
+import SiteFooter from './components/layout/SiteFooter.vue'
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
-</template>
+  <div class="site-layout">
+    <SiteNavbar />
 
-<style scoped></style>
+    <main class="site-main">
+      <RouterView />
+    </main>
+
+    <SiteFooter />
+  </div>
+</template>
