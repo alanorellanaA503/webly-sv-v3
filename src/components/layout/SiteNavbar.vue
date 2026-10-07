@@ -155,11 +155,7 @@ watch(() => ruta.fullPath, () => {
   transform: scale(1.35); 
   transform-origin: center; 
 
-  /* Transición fluida */
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.3s ease;
   
-  /* Sombra verde ligera y limpia (sin tonos oscuros) */
-  filter: drop-shadow(0 2px 8px rgba(47, 191, 113, 0.2));
 }
 
 /* Hover: Luz brillante y suave sin sombras oscuras */
