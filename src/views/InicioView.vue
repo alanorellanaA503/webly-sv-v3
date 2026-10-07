@@ -1,7 +1,9 @@
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Code, Layers, Wrench } from '@lucide/vue'
 import ServiceCard from '../components/ui/ServiceCard.vue'
+import wallpaper from '../assets/illustrations/wallpaper-ajolote.svg'
 
 // No necesitamos ref: por ahora esta información no cambia.
 const servicios = [
@@ -27,12 +29,76 @@ const servicios = [
     icono: Wrench,
   },
 ]
+
+/* ---------- Parallax del fondo del hero ----------
+   El fondo se desplaza a una fracción de la velocidad del scroll,
+   por eso parece que está más lejos que el texto.
+   0 = sin efecto · 0.2 = sutil · 0.4 = marcado */
+const PARALLAX_SPEED = 0.25
+
+const heroRef = ref(null)
+const bgRef = ref(null)
+const wallpaperLoaded = ref(false)
+
+let frameId = null
+let heroVisible = true
+let observer = null
+
+function updateParallax() {
+  frameId = null
+  if (!heroVisible || !bgRef.value) return
+
+  bgRef.value.style.transform =
+    `translate3d(0, ${window.scrollY * PARALLAX_SPEED}px, 0)`
+}
+
+function onScroll() {
+  // Un solo cálculo por frame, sin importar cuántos eventos lleguen.
+  if (frameId === null) {
+    frameId = requestAnimationFrame(updateParallax)
+  }
+}
+
+onMounted(() => {
+  // Respeta a quienes prefieren menos movimiento.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (reduceMotion || !heroRef.value) return
+
+  // Solo calcula mientras el hero es visible.
+  observer = new IntersectionObserver(([entry]) => {
+    heroVisible = entry.isIntersecting
+    if (heroVisible) onScroll()
+  })
+  observer.observe(heroRef.value)
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onScroll)
+  observer?.disconnect()
+  if (frameId !== null) cancelAnimationFrame(frameId)
+})
 </script>
 
 <template>
   <div class="inicio">
     <!-- Presentación principal -->
-    <section class="hero" aria-labelledby="hero-titulo">
+    <section ref="heroRef" class="hero" aria-labelledby="hero-titulo">
+      <!-- Fondo decorativo con parallax -->
+      <div ref="bgRef" class="hero-bg" aria-hidden="true">
+        <img
+          :src="wallpaper"
+          alt=""
+          width="1920"
+          height="1080"
+          decoding="async"
+          :class="{ 'is-loaded': wallpaperLoaded }"
+          @load="wallpaperLoaded = true"
+        >
+      </div>
+
       <div class="container hero-content">
         <p class="eyebrow">
           Websites, development, webapp
@@ -151,6 +217,9 @@ const servicios = [
 <style scoped>
 /* Hero: ocupa la pantalla disponible debajo del navbar */
 .hero {
+  position: relative;
+  isolation: isolate; /* mantiene las capas y el blend dentro del hero */
+  overflow: hidden;
   min-height: calc(100svh - var(--navbar-height));
   display: flex;
   align-items: center;
@@ -170,7 +239,59 @@ const servicios = [
     var(--color-background);
 }
 
+/* Capa 0: wallpaper.
+   Es más alta que el hero (se extiende hacia arriba) para que
+   el parallax nunca deje un hueco al desplazarse. */
+.hero-bg {
+  position: absolute;
+  inset: -30% 0 0;
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+  /* El blanco del SVG desaparece y solo quedan las líneas sobre los degradados */
+  mix-blend-mode: multiply;
+}
+
+.hero-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  user-select: none;
+}
+
+.hero-bg img.is-loaded {
+  opacity: 0.7;
+}
+
+/* Capa 1: velo suave detrás del texto para mantener la lectura clara */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 58% 62% at 50% 50%,
+      color-mix(in srgb, var(--color-background) 94%, transparent) 0%,
+      color-mix(in srgb, var(--color-background) 72%, transparent) 50%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 80%,
+      color-mix(in srgb, var(--color-background) 60%, transparent) 100%
+    );
+}
+
+/* Capa 2: contenido */
 .hero-content {
+  position: relative;
+  z-index: 2;
   max-width: 1000px;
 }
 
@@ -272,6 +393,34 @@ const servicios = [
   flex-shrink: 0;
 }
 
+/* Pantallas verticales (móvil y tablet vertical):
+   se muestra la escena completa abajo, en lugar de recortarla */
+@media (max-aspect-ratio: 1 / 1) {
+  .hero-bg img {
+    object-fit: contain;
+    object-position: center bottom;
+  }
+
+  .hero-bg img.is-loaded {
+    opacity: 0.85;
+  }
+
+  .hero::after {
+    background:
+      radial-gradient(
+        ellipse 95% 55% at 50% 40%,
+        color-mix(in srgb, var(--color-background) 92%, transparent) 0%,
+        color-mix(in srgb, var(--color-background) 65%, transparent) 60%,
+        transparent 100%
+      ),
+      linear-gradient(
+        to bottom,
+        transparent 85%,
+        color-mix(in srgb, var(--color-background) 60%, transparent) 100%
+      );
+  }
+}
+
 /* Tablet */
 @media (max-width: 1000px) {
   .services-grid {
@@ -310,6 +459,17 @@ const servicios = [
 
   .hero-actions .button {
     width: 100%;
+  }
+}
+
+/* Sin movimiento: fondo fijo y sin transición de entrada */
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg {
+    will-change: auto;
+  }
+
+  .hero-bg img {
+    transition: none;
   }
 }
 </style>
