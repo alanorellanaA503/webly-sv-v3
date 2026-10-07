@@ -2,20 +2,47 @@
 import { reactive, ref, computed, watch } from 'vue'
 import { Mail, Send } from '@lucide/vue'
 
-// reactive agrupa los campos del formulario en un objeto.
+// Solicitud activa el selector; Contacto utiliza los valores por defecto.
+const props = defineProps({
+  mostrarPaquetes: {
+    type: Boolean,
+    default: false,
+  },
+  paqueteInicial: {
+    type: String,
+    default: '',
+  },
+})
+
+const paquetes = [
+  { valor: 'basico', texto: 'Básico — $100 por proyecto' },
+  { valor: 'profesional', texto: 'Profesional — $250 por proyecto' },
+  { valor: 'tienda', texto: 'Tienda Online — $400 por proyecto' },
+  { valor: 'mantenimiento', texto: 'Mantenimiento — $50 por mes' },
+  { valor: 'personalizado', texto: 'Proyecto personalizado' },
+]
+
+// Los campos se sincronizan con el formulario mediante v-model.
 const formulario = reactive({
   nombre: '',
   correo: '',
   negocio: '',
+  paquete: '',
   mensaje: '',
 })
 
 const preparado = ref(false)
 const aviso = ref('')
 
-// El enlace se calcula utilizando los valores del formulario.
+const paqueteSeleccionado = computed(() => {
+  return paquetes.find(paquete => paquete.valor === formulario.paquete)
+})
+
+// Preparamos un borrador: el visitante lo enviará desde su correo.
 const enlaceCorreo = computed(() => {
-  const asunto = 'Consulta desde Webly SV'
+  const asunto = props.mostrarPaquetes
+    ? 'Solicitud de información — Webly SV'
+    : 'Consulta desde Webly SV'
 
   const contenido = [
     'Hola, equipo Webly:',
@@ -23,26 +50,39 @@ const enlaceCorreo = computed(() => {
     `Nombre: ${formulario.nombre}`,
     `Correo: ${formulario.correo}`,
     `Negocio: ${formulario.negocio || 'Sin indicar'}`,
-    '',
-    formulario.mensaje,
-  ].join('\n')
+  ]
+
+  if (props.mostrarPaquetes) {
+    contenido.push(
+      `Paquete: ${paqueteSeleccionado.value?.texto || 'Sin seleccionar'}`
+    )
+  }
+
+  contenido.push('', formulario.mensaje)
 
   return (
     'mailto:weblysv@gmail.com' +
     `?subject=${encodeURIComponent(asunto)}` +
-    `&body=${encodeURIComponent(contenido)}`
+    `&body=${encodeURIComponent(contenido.join('\n'))}`
   )
 })
 
 function prepararConsulta() {
   // La validación HTML comprueba los campos antes del evento submit.
-  // Esta comprobación adicional evita nombres o mensajes vacíos.
+  // Comprobamos también el contenido después de eliminar espacios.
   if (
     formulario.nombre.trim().length < 2 ||
     formulario.mensaje.trim().length < 10
   ) {
     preparado.value = false
-    aviso.value = 'Escribe un nombre válido y un mensaje de al menos 10 caracteres.'
+    aviso.value =
+      'Escribe un nombre válido y un mensaje de al menos 10 caracteres.'
+    return
+  }
+
+  if (props.mostrarPaquetes && !paqueteSeleccionado.value) {
+    preparado.value = false
+    aviso.value = 'Selecciona un paquete o proyecto personalizado.'
     return
   }
 
@@ -51,11 +91,22 @@ function prepararConsulta() {
     'Tu consulta está preparada. Abre tu correo para revisarla y enviarla.'
 }
 
-// Si se editan los datos, pedimos preparar nuevamente la consulta.
+// Si se modifica un campo, es necesario preparar nuevamente el borrador.
 watch(formulario, () => {
   preparado.value = false
   aviso.value = ''
 })
+
+// Preseleccionamos únicamente paquetes conocidos.
+// immediate aplica también la selección al cargar el componente.
+watch(
+  () => props.paqueteInicial,
+  valor => {
+    const existe = paquetes.some(paquete => paquete.valor === valor)
+    formulario.paquete = existe ? valor : ''
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -65,7 +116,14 @@ watch(formulario, () => {
         <Mail :size="26" aria-hidden="true" />
       </span>
 
-      <h2>Cuéntanos tu idea.</h2>
+      <h2>
+        {{
+          mostrarPaquetes
+            ? 'Demos forma a tu proyecto.'
+            : 'Cuéntanos tu idea.'
+        }}
+      </h2>
+
       <p>Empecemos por conocer qué te gustaría construir.</p>
     </div>
 
@@ -118,6 +176,28 @@ watch(formulario, () => {
       >
     </div>
 
+    <!-- Este campo aparece únicamente en la página Solicitud -->
+    <div v-if="mostrarPaquetes" class="field">
+      <label for="contacto-paquete">Paquete de interés</label>
+
+      <select
+        id="contacto-paquete"
+        v-model="formulario.paquete"
+        name="paquete"
+        required
+      >
+        <option value="" disabled>Selecciona una opción</option>
+
+        <option
+          v-for="paquete in paquetes"
+          :key="paquete.valor"
+          :value="paquete.valor"
+        >
+          {{ paquete.texto }}
+        </option>
+      </select>
+    </div>
+
     <div class="field">
       <label for="contacto-mensaje">Mensaje</label>
 
@@ -138,7 +218,7 @@ watch(formulario, () => {
       Preparar consulta
     </button>
 
-    <!-- Región presente desde el inicio para anunciar los cambios -->
+    <!-- Anuncia el resultado sin afirmar que el mensaje fue enviado -->
     <p class="form-status" role="status">
       {{ aviso }}
     </p>
@@ -163,6 +243,7 @@ watch(formulario, () => {
 
 <style scoped>
 .contact-form {
+  min-width: 0;
   padding: clamp(1.5rem, 4vw, 2.5rem);
 }
 
@@ -197,6 +278,7 @@ watch(formulario, () => {
 }
 
 .field {
+  min-width: 0;
   margin-bottom: 1.25rem;
 }
 
@@ -213,9 +295,11 @@ watch(formulario, () => {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   display: block;
   width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: 0.85rem 1rem;
   border: 1px solid var(--color-border);
@@ -235,7 +319,8 @@ watch(formulario, () => {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   border-color: var(--color-primary);
 }
 
@@ -262,6 +347,7 @@ watch(formulario, () => {
   margin: 1.5rem 0 0;
   color: var(--color-muted);
   font-size: 0.875rem;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 600px) {
